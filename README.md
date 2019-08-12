@@ -25,7 +25,7 @@ Here's a high level diagram of what the blueprint will automatically configure f
 
 Region| Launch
 ------|-----
-Asia Pacific (Singapore) | [![cfn](http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/images/cloudformation-launch-stack-button.png)](https://console.aws.amazon.com/cloudformation/home?region=ap-southeast-1#/stacks/new?stackName=serverless-app-analytics&templateURL=https://kapilpen.s3-ap-southeast-1.amazonaws.com/labs/serverless-app-analytics-pipeline/serverless-app-analytics-pipeline.yaml)
+Asia Pacific (Singapore) | [![cfn](http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/images/cloudformation-launch-stack-button.png)](https://console.aws.amazon.com/cloudformation/home?region=ap-southeast-1#/stacks/new?stackName=sales-analytics&templateURL=https://kapilpen.s3-ap-southeast-1.amazonaws.com/labs/aws-analytics-for-sales-blueprint/blueprint-serverless.yaml)
 
 2. Scroll to the bottom and click **Next**.
 	* *Stack name*: **sales-analytics**
