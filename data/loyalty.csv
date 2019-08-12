@@ -1,0 +1,11 @@
+﻿cust_id,age,gender,marital_status,city,member_since,points
+1,23,female,single,New York,2010,1000
+2,34,female,married,Los Angeles,2005,23000
+3,30,male,single,San Francisco,2007,13000
+4,32,female,married,Seattle,2015,3000
+5,41,male,married,San Francisco,2012,30000
+6,40,female,married,New York,2015,10000
+7,42,female,single,Los Angeles,2000,50000
+8,33,female,single,San Francisco,2008,25000
+9,20,male,single,Seattle,2018,2000
+10,25,female,single,San Francisco,2013,10000

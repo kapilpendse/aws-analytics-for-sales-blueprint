@@ -1,0 +1,158 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: This is a blueprint for setting up an analytics platform for sales related data such as point of sale, loyalty, marketing etc. It connects the right AWS building blocks to get you from data to insights in minutes.
+Parameters:
+  s3BucketName:
+    Description: "We need a place to store all your raw data. This is going to be an Amazon S3 bucket. Let's give it a name."
+    Type: String
+    MinLength: 1
+    ConstraintDescription: "A bucket name must be specified. S3 bucket name must be globally unique. https://docs.aws.amazon.com/AmazonS3/latest/dev/BucketRestrictions.html"
+  rawDataBatchSizeInSeconds:
+    Description: "Stream data like transactions coming from your point-of-sale devices can be streamed straight to your raw data store. This can be done using Amazon Kinesis Data Firehose. It delivers data into the destination in batches. Set the minimum batch size, in seconds."
+    Type: String
+    Default: 60
+    AllowedPattern: "([6-8][0-9]|9[0-9]|[1-8][0-9]{2}|900)"
+    ConstraintDescription: Must be a value between 60 and 900 (inclusive).
+  rawDataBatchSizeInMBs:
+    Description: "Set the minimum batch size, in megabytes."
+    Type: String
+    Default: 1
+    AllowedPattern: "([1-9]|[1-8][0-9]|9[0-9]|1[01][0-9]|12[0-8])"
+    ConstraintDescription: "Must be a value between 1 and 128 (inclusive)."
+  databaseName:
+    Description: "The raw data will be automatically analyzed and converted to a logical database. This allows you to write SQL queries to analyze your data. But first, you need to name your logical database."
+    Type: String
+    MinLength: 1
+    ConstraintDescription: "Database name is required."
+Resources:
+  deliveryStream:
+    DependsOn:
+      - deliveryPolicy
+    Type: AWS::KinesisFirehose::DeliveryStream
+    Properties:
+      ExtendedS3DestinationConfiguration:
+        BucketARN: !Join 
+          - ''
+          - - 'arn:aws:s3:::'
+            - !Ref s3bucket
+        BufferingHints:
+          IntervalInSeconds: !Ref rawDataBatchSizeInSeconds
+          SizeInMBs: !Ref rawDataBatchSizeInMBs
+        CompressionFormat: UNCOMPRESSED
+        Prefix: raw/stream/pos/
+        RoleARN: !GetAtt deliveryRole.Arn
+        ProcessingConfiguration:
+          Enabled: 'false'
+  s3bucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Ref s3BucketName
+      VersioningConfiguration:
+        Status: Enabled
+  deliveryRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Sid: ''
+            Effect: Allow
+            Principal:
+              Service: firehose.amazonaws.com
+            Action: 'sts:AssumeRole'
+            Condition:
+              StringEquals:
+                'sts:ExternalId': !Ref 'AWS::AccountId'
+  deliveryPolicy:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: firehose_delivery_policy
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Action:
+              - 's3:AbortMultipartUpload'
+              - 's3:GetBucketLocation'
+              - 's3:GetObject'
+              - 's3:ListBucket'
+              - 's3:ListBucketMultipartUploads'
+              - 's3:PutObject'
+            Resource:
+              - !Join 
+                - ''
+                - - 'arn:aws:s3:::'
+                  - !Ref s3bucket
+              - !Join 
+                - ''
+                - - 'arn:aws:s3:::'
+                  - !Ref s3bucket
+                  - '*'
+      Roles:
+        - !Ref deliveryRole
+  glueRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          -
+            Effect: "Allow"
+            Principal:
+              Service:
+                - "glue.amazonaws.com"
+            Action:
+              - "sts:AssumeRole"
+      Path: "/"
+      Policies:
+        -
+          PolicyName: "root"
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              -
+                Effect: "Allow"
+                Action: "*"
+                Resource: "*"
+  glueDatabase:
+    Type: AWS::Glue::Database
+    Properties:
+      CatalogId: !Ref AWS::AccountId
+      DatabaseInput:
+        Name: !Ref databaseName
+  MyCrawler:
+    Type: AWS::Glue::Crawler
+    Properties:
+      Name: "sales-data-crawler"
+      Role: !GetAtt glueRole.Arn
+      DatabaseName: !Ref glueDatabase
+      Targets:
+        S3Targets:
+          - Path: !Join [ '', [ !Ref s3bucket, "/raw/stream/pos" ] ]
+          - Path: !Join [ '', [ !Ref s3bucket, "/raw/imported/pos" ] ]
+          - Path: !Join [ '', [ !Ref s3bucket, "/raw/imported/loyalty" ] ]
+          - Path: !Join [ '', [ !Ref s3bucket, "/raw/imported/marketing" ] ]
+      SchemaChangePolicy:
+        UpdateBehavior: "UPDATE_IN_DATABASE"
+        DeleteBehavior: "LOG"
+      Schedule:
+        ScheduleExpression: "cron(0/5 * * * ? *)"
+Outputs:
+  firehoseArn:
+    Description: "ARN of your Amazon Kinesis Data Firehose delivery stream."
+    Value: !GetAtt deliveryStream.Arn
+  s3Arn:
+    Description: "ARN of your Amazon S3 bucket."
+    Value: !GetAtt s3bucket.Arn
+  s3LocationStreamPos:
+    Description: "Location within the bucket where your streaming Point-of-Sale data will be stored by Kinesis Firehose."
+    Value: !Join [ '/', [ !GetAtt s3bucket.Arn, "raw/stream/pos" ] ]
+  s3LocationImportLoyalty:
+    Description: "Location within the bucket where you should upload your loyalty data. An AWS Glue crawler will automatically scan this location and make the data here available for analysis in Athena & QuickSight as a database table in your logical database."
+    Value: !Join [ '/', [ !GetAtt s3bucket.Arn, "raw/imported/loyalty" ] ]
+  s3LocationImportMarketing:
+    Description: "Location within the bucket where you should upload your marketing data. An AWS Glue crawler will automatically scan this location and make the data here available for analysis in Athena & QuickSight as a database table in your logical database."
+    Value: !Join [ '/', [ !GetAtt s3bucket.Arn, "raw/imported/marketing" ] ]
+  s3LocationImportPos:
+    Description: "Location within the bucket where you should upload your point-of-sale data. An AWS Glue crawler will automatically scan this location and make the data here available for analysis in Athena & QuickSight as a database table in your logical database."
+    Value: !Join [ '/', [ !GetAtt s3bucket.Arn, "raw/imported/pos" ] ]
+
