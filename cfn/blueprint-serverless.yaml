@@ -48,6 +48,10 @@ Resources:
       BucketName: !Ref s3BucketName
       VersioningConfiguration:
         Status: Enabled
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
   deliveryRole:
     Type: AWS::IAM::Role
     Properties:
@@ -102,6 +106,8 @@ Resources:
                 - "glue.amazonaws.com"
             Action:
               - "sts:AssumeRole"
+      ManagedPolicyArns:
+        - "arn:aws:iam::aws:policy/service-role/AWSGlueServiceRole"
       Path: "/"
       Policies:
         -
@@ -111,8 +117,18 @@ Resources:
             Statement:
               -
                 Effect: "Allow"
-                Action: "*"
-                Resource: "*"
+                Action:
+                  - 's3:*'
+                Resource:
+                  - !Join 
+                    - ''
+                    - - 'arn:aws:s3:::'
+                      - !Ref s3bucket
+                  - !Join 
+                    - ''
+                    - - 'arn:aws:s3:::'
+                      - !Ref s3bucket
+                      - '*'
   glueDatabase:
     Type: AWS::Glue::Database
     Properties:
