@@ -125,10 +125,10 @@ If you want to implement ETL jobs on the data that is stored in your S3 bucket, 
 
 ### Access to managed services using private endpoints
 This blueprint uses fully managed services from AWS, such as AWS Glue, Amazon Kinesis Data Firehose, Amazon S3 and Amazon QuickSight. As fully managed services, by default they run outside of your VPCs and are accessed via public API endpoints. You can access some of these services via private [VPC Endpoints](https://docs.aws.amazon.com/vpc/latest/userguide/vpc-endpoints.html). Depending on your security requirements, you may want to implement VPC Endpoints to these services in your AWS accounts. Learn more here:
-    * [Endpoints for Amazon S3](https://docs.aws.amazon.com/vpc/latest/userguide/vpc-endpoints-s3.html)
-    * [Using AWS Glue with VPC Endpoints](https://docs.aws.amazon.com/glue/latest/dg/vpc-endpoint.html)
-    * [Using an Amazon VPC with Amazon QuickSight](https://docs.aws.amazon.com/quicksight/latest/user/working-with-aws-vpc.html)
-    * [Using Amazon Kinesis Data Firehose with AWS PrivateLink](https://docs.aws.amazon.com/firehose/latest/dev/vpc.html)
+* [Endpoints for Amazon S3](https://docs.aws.amazon.com/vpc/latest/userguide/vpc-endpoints-s3.html)
+* [Using AWS Glue with VPC Endpoints](https://docs.aws.amazon.com/glue/latest/dg/vpc-endpoint.html)
+* [Using an Amazon VPC with Amazon QuickSight](https://docs.aws.amazon.com/quicksight/latest/user/working-with-aws-vpc.html)
+* [Using Amazon Kinesis Data Firehose with AWS PrivateLink](https://docs.aws.amazon.com/firehose/latest/dev/vpc.html)
 
 ### Resource Tagging
 Objects stored in Amazon S3 can be tagged. Tags are simple key-value pairs that help with organizing and classifying your data. To learn more, [click here](https://docs.aws.amazon.com/AmazonS3/latest/dev/object-tagging.html). AWS Glue also supports tagging of resources such as Crawlers and Jobs. To help you manage your AWS Glue resources, you can optionally assign your own tags to some AWS Glue resource types. Learn more [here](https://docs.aws.amazon.com/glue/latest/dg/monitor-tags.html).
